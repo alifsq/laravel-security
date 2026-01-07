@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
-use App\Providers\Guard\TokenGuard;
-use Illuminate\Auth\RequestGuard;
-use Illuminate\Contracts\Foundation\Application;
+use App\Models\Contact;
+use App\Models\User;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -24,15 +24,29 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Auth::extend('token', function (Application $app, string $name, array $config) {
-            $provider = Auth::createUserProvider($config['provider']);
+        Auth::viaRequest('token', function ($request) {
+            return User::where('token', $request->header('API-Key'))->first();
+        });
 
-            return new RequestGuard(
-                fn($request) => $provider->retrieveByCredentials([
-                    'api_token' => $request->bearerToken()
-                ]),
-                $app['request']
-            );
+        Gate::define('get-contact', function (User $user, Contact $contact) {
+            return $user->id === $contact->user_id;
+        });
+        Gate::define('update-contact', function (User $user, Contact $contact) {
+            return $user->id === $contact->user_id;
+        });
+        Gate::define('delete-contact', function (User $user, Contact $contact) {
+            return $user->id === $contact->user_id;
+        });
+
+        // Gate with Response
+        Gate::define('create-contact', function (User $user) {
+            if ($user->name == 'admin') {
+                return Response::allow();
+            } else {
+                return Response::deny('You are not admin');
+            }
         });
     }
+
+    
 }

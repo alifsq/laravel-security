@@ -12,20 +12,22 @@ use Tests\TestCase;
 
 class UserTest extends TestCase
 {
-    public function testAuth(){
+    public function testAuth()
+    {
         $this->seed(UserSeeder::class);
         $response = Auth::attempt([
-            'email'=>'budi@mail.com',
-            'password'=>'rahasia'
-        ],true);
+            'email' => 'budi@mail.com',
+            'password' => 'rahasia'
+        ], true);
         self::assertTrue($response);
 
         $user = Auth::user();
         self::assertNotNull($user);
-        self::assertEquals('budi@mail.com',$user->email);
+        self::assertEquals('budi@mail.com', $user->email);
     }
 
-    public function testlogin(){
+    public function testlogin()
+    {
         $this->seed(UserSeeder::class);
         $this->get("users/login?email=budi@mail.com&password=rahasia")
             ->assertRedirect('users/current');
@@ -34,30 +36,40 @@ class UserTest extends TestCase
             ->assertSeeText("Wrong Crisidentials");
     }
 
-    public function testCurrent(){
+    public function testCurrent()
+    {
         Auth::logout();
         $this->seed(UserSeeder::class);
 
         $this->get('/users/current')
-        ->assertStatus(302)
-        ->assertRedirect('login');
+            ->assertStatus(302)
+            ->assertRedirect('login');
 
-        $user = User::where('email','budi@mail.com')->first();
+        $user = User::where('email', 'budi@mail.com')->first();
         $this->actingAs($user)->get('/users/current')->assertSeeText('Hello Budi');
     }
 
-    public function testHash(){
+    public function testHash()
+    {
         $password = "rahasia";
         $hash = Hash::make($password);
-        self::assertTrue(Hash::check($password,$hash));
+        self::assertTrue(Hash::check($password, $hash));
     }
 
 
-    public function testGuard(){
+    public function testGuard()
+    {
         $this->seed(UserSeeder::class);
-        $this->get('api/users/current',[
-            'Accept'=>'application/json',
+        $this->get('api/users/current', [
+            'Accept' => 'application/json',
         ])->assertStatus(401);
+
+        $this->get("api/users/current", [
+            "Accept" => "application/json",
+            "API-Key" => "secret"
+        ])
+            ->assertStatus(200)
+            ->assertSeeText("Hello Budi");
     }
 
 

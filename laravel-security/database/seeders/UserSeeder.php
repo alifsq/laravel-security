@@ -19,6 +19,6 @@ class UserSeeder extends Seeder
             'email'=>'budi@mail.com',
             'password'=>Hash::make('rahasia'),
             'token'=>'secret',
-        ]);  
+        ]);
     }
 }
